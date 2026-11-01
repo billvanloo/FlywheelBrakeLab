@@ -1,4 +1,4 @@
-// ecosystem/shell/shell.js v1.2.1
+// ecosystem/shell/shell.js v1.2.2
 // Shared tool frame for the Engineered by the Numbers tools (spec 00 §2–8):
 // header, footer, help, themes, small-screen notice, predict-first, show the
 // working, field validation, save/load, PNG export, printable report, the
@@ -838,6 +838,8 @@ const Shell = (function () {
       const teacherTool = cfg.predictFirst === false;
       report.innerHTML = '<div class="rb"><h1>' + esc(cfg.tool) + ' — Report</h1><div class="sub">' + esc(cfg.subtitle || '') + '</div>' +
         '<table><tr class="hd"><th>Name</th><th>Date</th><th>Mode</th><th>Tool version</th></tr><tr><td>' + esc(teacherTool && cfg.nameField === false ? '—' : app.student() || 'unnamed') + '</td><td>' + localDateISO() + '</td><td>' + esc(contextLabel()) + '</td><td>' + esc(cfg.version) + '</td></tr></table>' +
+        // report().lead: sections printed first, before the drawing (the Conveyor Designer's requirements).
+        (r.lead || []).map(x => '<h2>' + esc(x.title) + '</h2>' + x.html).join('') +
         '<div class="fig">' + d.svg + '</div>' +
         '<h2>Inputs</h2><table>' + rows(r.inputs) + '</table>' +
         '<h2>Results</h2><table>' + rows(r.outputs) + '</table>' +
@@ -986,6 +988,6 @@ const Shell = (function () {
     return app;
   }
 
-  return { create, util, version: '1.2.1' };
+  return { create, util, version: '1.2.2' };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Shell;

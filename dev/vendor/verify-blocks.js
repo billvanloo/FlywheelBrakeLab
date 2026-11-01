@@ -49,7 +49,7 @@ function verify(repoRoot) {
   const vendorDir = path.join(dev, 'vendor');
   if (fs.existsSync(vendorDir)) {
     for (const f of fs.readdirSync(vendorDir)) {
-      if (f === 'verify-blocks.js' || f === 'e2e-kit.js' || f === 'VENDORED.md') continue;
+      if (f === 'verify-blocks.js' || f === 'e2e-kit.js' || f === 'VENDORED.md' || !/\.(js|css)$/.test(f)) continue;
       if (!found.some(b => b.name === 'vendor:' + f)) problems.push('vendor:' + f + ' is in dev/vendor but not inlined in index.html');
     }
   }

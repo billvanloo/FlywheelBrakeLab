@@ -1,4 +1,4 @@
-// ecosystem/tooling/e2e-kit.js v1.1.0
+// ecosystem/tooling/e2e-kit.js v1.2.0
 // Playwright helpers shared by every tool's dev/e2e.js: a static server on the
 // repo root, a browser page that records console errors, and the standard
 // checks every tool must pass (spec 00 and the per-tool definition of done).
@@ -189,8 +189,12 @@ async function standard(t, opts) {
   for (const k of opts.predictKeys || []) t.ok('prediction field for ' + k, await page.locator('#shPf_' + k).count() === 1);
   const n0 = await page.evaluate(() => window.__app.log.length);
   const first = (opts.predictKeys || [])[0];
+  // Tools with one Check per step (predict groups): work with the first key's group.
+  const grp = first ? await page.getAttribute('#shPf_' + first, 'data-group') || '' : '';
+  const checkSel = '#shPfBox [data-check="' + grp + '"]', againSel = '#shPfBox [data-again="' + grp + '"]';
+  const checkAll = async () => { while (await page.locator('#shPfBox [data-check]').count()) await page.locator('#shPfBox [data-check]').first().click(); };
   if (first) await page.fill('#shPf_' + first, '1');
-  await page.click('#shCheck');
+  await checkAll();
   t.ok('Check reveals the results', await page.locator('#shResultsBody .masked').count() === 0);
   t.ok('Check shows the "You predicted" message', (await page.textContent('#shPfBox')).includes('You predicted'));
   t.ok('Check writes a log record', await page.evaluate(() => window.__app.log.length) === n0 + 1);
@@ -201,15 +205,15 @@ async function standard(t, opts) {
     if (first) t.ok('changing an input clears the prediction fields', (await page.inputValue('#shPf_' + first)) === '');
   }
   if (first) {
-    await page.fill('#shPf_' + first, '1'); await page.click('#shCheck');
-    await page.click('#shAgain');
-    await page.fill('#shPf_' + first, '2'); await page.click('#shCheck');
+    await page.fill('#shPf_' + first, '1'); await page.click(checkSel);
+    await page.click(againSel);
+    await page.fill('#shPf_' + first, '2'); await page.click(checkSel);
     const attempts = await page.evaluate(k => window.__app.log.filter(r => r.quantity === window.__app.log[window.__app.log.length - 1].quantity).map(r => r.attempt), first);
     t.ok('Predict again on the same problem counts a new attempt', attempts[attempts.length - 1] === attempts[attempts.length - 2] + 1, JSON.stringify(attempts));
-    await page.click('#shAgain');
+    await page.click(againSel);
     await page.fill('#shPf_' + first, '3');
     await page.press('#shPf_' + first, 'Enter');
-    t.ok('Enter in a prediction box checks it and the results stay shown', await page.locator('#shResultsBody .masked').count() === 0 && await page.locator('#shAgain').count() === 1);
+    t.ok('Enter in a prediction box checks it and the results stay shown', await page.evaluate(g => !window.__app.masked(g), grp) && await page.locator(againSel).count() === 1);
   }
   await page.click('#shPredict');
 
